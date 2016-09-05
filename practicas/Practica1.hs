@@ -24,8 +24,8 @@ term =do t <- factor
           <|> return t)
           
 factor::Parser Int 
-factor = do d <- digit
-            return (digitToInt d)
+factor = do d <- integer
+            return d
          <|> do char '('
                 e <- expr
                 char ')'
@@ -52,8 +52,8 @@ term2 =do t <- factor2
               <|> return t))
 
 factor2 :: Parser Expr                       
-factor2 = do t <- digit
-             return (Num (digitToInt t))
+factor2 = do t <- integer
+             return (Num t)
           <|> do char '('
                  e <- expr2
                  char ')'
@@ -80,11 +80,11 @@ charint = do symbol "["
              x <- charint'
              return x
 
-charint' :: Parser Lis --consultar como parsear [1,'a']
+charint' :: Parser Lis 
 charint' = do y <- do x <- letter
                       return (Lyr x)
-                    <|> do x <- digit
-                           return (Nume (digitToInt x))
+                    <|> do x <- integer
+                           return (Nume x)
               symbol ","
               xs <- charint'
               return (Cons y xs)
@@ -93,8 +93,8 @@ charint' = do y <- do x <- letter
                       x <- letter
                       --symbol '
                       return (Lyr x)
-                    <|> do x <- digit
-                           return (Nume (digitToInt x))
+                    <|> do x <- integer
+                           return (Nume x)
               symbol "]"
               return (Cons y Empty) 
 
@@ -164,7 +164,7 @@ ter' :: Parser (Int -> Int)
 ter' = do symbol "/"
           x <- noDiv
           g <- ter'
-          return (\y -> g(div x y))
+          return (\y -> g(div y x))
         <|> do return id
 
 noDiv :: Parser Int
@@ -180,8 +180,8 @@ noDiv' = do symbol "*"
          <|> do return id
 
 facto :: Parser Int
-facto = do x <- digit
-           return (digitToInt x)
+facto = do x <- integer
+           return x
          <|> do symbol "("
                 x <- exp1
                 symbol ")"
@@ -235,12 +235,12 @@ nocorchete = do symbol "("
                    return (Id xs)
 
 corchete :: Parser [Int]
-corchete = do n <- digit
+corchete = do n <- integer
               symbol "]"
               symbol "["
               n' <- corchete
-              return ((digitToInt n) : n')
-           <|> do n <- digit
+              return (n : n')
+           <|> do n <- integer
                   symbol "]"
-                  return [(digitToInt n)]
+                  return [n]
 
