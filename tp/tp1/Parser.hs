@@ -23,6 +23,7 @@ lis = makeTokenParser (emptyDef   { commentStart  = "/*"
                                   , opLetter      = char '='
                                   , reservedNames = ["true","false","skip","if",
                                                      "then","else","end", "while","do"]
+                                  , reservedOpNames = ["|", "&", ">", "<", "=", "-","~"]                   
                                   })
   
 ----------------------------------
@@ -39,18 +40,9 @@ var = do x <- identifier lis
 
 
 intexp :: Parser IntExp
-intexp  = try (do char '-'
-                  x <- intexp
-                  return (UMinus x))
-           <|> try (chainl1 term expr')
+intexp  =  try (chainl1 term expr')
                <|> try (do x <- term
                            return x)
-                   <|> (do b <- boolexp
-                           symbol lis "?"
-                           x <- intexp
-                           symbol lis ":"
-                           y <- intexp
-                           return (Quest b x y ))
 
 term :: Parser IntExp
 term = try (chainl1 factor term')
@@ -58,28 +50,29 @@ term = try (chainl1 factor term')
                return x)
 
 factor :: Parser IntExp
-factor = try (do x <- nat 
-                 return x)
-             <|> try (do x <- var
+factor = try (do reservedOp lis "-"
+                 x <- factor
+                 return (UMinus x))
+             <|> try (do x <- nat 
                          return x)
-                      <|> (do symbol lis "("
-                              x <- intexp
-                              symbol lis ")"
-                              return x)
+                <|> try (do x <- var
+                            return x)
+                      <|> parens lis intexp
+                              
 -----------------------------------
 --- Parser auxiliar
 ------------------------------------
 
 expr' :: Parser (IntExp -> IntExp -> IntExp)
-expr' = try (do symbol lis "+"
+expr' = try (do reservedOp lis "+"
                 return Plus)
-        <|> (do symbol lis "-"
+        <|> (do reservedOp lis "-"
                 return Minus)
-               
+
 term' :: Parser (IntExp -> IntExp -> IntExp)
-term' = try (do symbol lis "*"
+term' = try (do reservedOp lis "*"
                 return Times)
-            <|> (do symbol lis "/"
+            <|> (do reservedOp lis "/"
                     return Div) 
 
 -----------------------------------
@@ -87,36 +80,33 @@ term' = try (do symbol lis "*"
 ------------------------------------
 
 val :: Parser BoolExp
-val = try (do symbol lis "True"
+val = try (do reserved lis "true"
               return BTrue)
-           <|> try (do symbol lis "False"
+           <|> try (do reserved lis "false"
                        return BFalse)
-                <|> (do symbol lis "("
-                        b <- boolexp
-                        symbol lis ")"
-                        return b)
+                <|> parens lis boolexp
 
 comp :: Parser BoolExp
 comp = try (do x <- intexp
-               symbol lis "="
+               reservedOp lis "="
                y <- intexp
                return (Eq x y))
            <|> try (do x <- intexp
-                       symbol lis "<"
+                       reservedOp lis "<"
                        y <- intexp
                        return (Lt x y))
            <|> try (do x <- intexp
-                       symbol lis ">"
+                       reservedOp lis ">"
                        y <- intexp
                        return (Gt x y))
            <|> (do x <- val
                    return x)
 
 noot :: Parser BoolExp
-noot = try (do symbol lis "~"
+noot = try (do reservedOp lis "~"
                b <- boolexp
                return (Not b))
-      <|> (do x <- comp
+      <|> (do x <- comp 
               return x)
               
 andy :: Parser BoolExp
@@ -125,11 +115,11 @@ andy = try (chainl1 noot and')
                return n)
 
 boolexp :: Parser BoolExp
-boolexp = try (do symbol lis "("
-                  b <- boolexp
-                  symbol lis ")"
-                  return b)
-              <|> try (chainl1 andy or')
+boolexp = try (chainl1 andy or')
+          {- <|> try (do symbol lis "("
+                       b <- boolexp
+                       symbol lis ")"
+                       return b)-}
                   <|> (do a <- andy
                           return a)
 
@@ -138,11 +128,11 @@ boolexp = try (do symbol lis "("
 ------------------------------------
 
 and' :: Parser (BoolExp -> BoolExp -> BoolExp)
-and' =  (do symbol lis "&"
+and' =  (do reservedOp lis "&"
             return And)
                 
 or' :: Parser (BoolExp -> BoolExp -> BoolExp)
-or' =  (do symbol lis "|"
+or' =  (do reservedOp lis "|"
            return Or)               
 
 -----------------------------------
