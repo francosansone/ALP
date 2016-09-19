@@ -22,9 +22,6 @@ update :: Variable -> Int -> State -> State
 update v i []= [(v,i)]
 update v i ((x,j):ys) | v == x      = ((v,i):ys)
                       | otherwise   = ((x,j):(update v i ys))
-                              {-  (x:ys) -> case x of
-                                                 (v, i) -> ((v,y):ys)
-                                                  z -> (z : (update v y ys)))-}
 
 -- Evalua un programa en el estado nulo
 eval :: Comm -> State

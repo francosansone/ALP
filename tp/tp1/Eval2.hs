@@ -3,7 +3,7 @@ module Eval2 (eval) where
 import AST
 
 -- Estados
-type State = [(Variable,Int)]
+type State = [(Variable, Maybe Int)]
 
 -- Estado nulo
 initState :: State
@@ -12,20 +12,17 @@ initState = []
 -- Busca el valor de una variabl en un estado
 -- Completar la definicion
 lookfor :: Variable -> State -> Maybe Int
-lookfor v [] = Nothing --error ("variable "++ v ++" no declarada")
-lookfor v ((x,i):xs) | v == x       = Just i
+lookfor v [] = Nothing 
+lookfor v ((x,i):xs) | v == x       = i
                      | otherwise    = lookfor v xs
                                
 -- Cambia el valor de una variable en un estado
 -- Completar la definicion
-update :: Variable -> Int -> State -> State
+update :: Variable -> Maybe Int -> State -> State
 update v i []= [(v,i)]
 update v i ((x,j):ys) | v == x      = ((v,i):ys)
                       | otherwise   = ((x,j):(update v i ys))
-                              {-  (x:ys) -> case x of
-                                                 (v, i) -> ((v,y):ys)
-                                                  z -> (z : (update v y ys)))-}
-
+                 
 -- Evalua un programa en el estado nulo
 eval :: Comm -> State
 eval p = evalComm p initState
@@ -35,9 +32,7 @@ eval p = evalComm p initState
 evalComm :: Comm -> State -> State
 evalComm = (\c xs   -> case c of
                             Skip            -> xs
-                            Let v i         -> case (evalIntExp i xs) of--update v (evalIntExp i xs) xs
-                                                     Just x -> update v x xs
-                                                     Nothing -> error ""
+                            Let v i         -> update v (evalIntExp i xs) xs
                             Seq c1 c2       -> evalComm c2 (evalComm c1 xs)
                             Cond b c1 c2    -> case evalBoolExp b xs of
                                                     True  -> evalComm c1 xs
@@ -55,19 +50,19 @@ evalIntExp i xs = case i of
                        UMinus x     -> case (evalIntExp x xs) of    
                                             Just n  -> Just ((*(-1)) n)
                                             Nothing -> Nothing
-                       Plus x y     -> case (evalIntExp y xs) of --(evalIntExp x xs) (evalIntExp y xs)
+                       Plus x y     -> case (evalIntExp y xs) of 
                                             Just n       -> case (evalIntExp x xs) of
                                                                  Just p -> Just (p + n)
                                                                  _      -> Nothing
-                       Minus x y    -> case (evalIntExp y xs) of --(evalIntExp x xs) (evalIntExp y xs)
+                       Minus x y    -> case (evalIntExp y xs) of 
                                             Just n       -> case (evalIntExp x xs) of
                                                                  Just p -> Just (p - n)
                                                                  _      -> Nothing
-                       Times x y    -> case (evalIntExp y xs) of --(evalIntExp x xs) (evalIntExp y xs)
+                       Times x y    -> case (evalIntExp y xs) of 
                                             Just n       -> case (evalIntExp x xs) of
                                                                  Just p -> Just (p * n)
                                                                  _      -> Nothing
-                       Div x y      -> case (evalIntExp y xs) of --(evalIntExp x xs) (evalIntExp y xs)
+                       Div x y      -> case (evalIntExp y xs) of 
                                             Just 0       -> Nothing
                                             Just n       -> case (evalIntExp x xs) of
                                                                  Just p -> Just (div p n)
@@ -89,15 +84,4 @@ evalBoolExp b xs = case b of
                         And b0 b1   -> (evalBoolExp b0 xs) && (evalBoolExp b1 xs)
                         Or b0 b1    -> (evalBoolExp b0 xs) || (evalBoolExp b1 xs)
                         Not b       -> not (evalBoolExp b xs)
-
-
-
-
-
-
-
-
-
-
-
 

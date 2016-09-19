@@ -116,10 +116,6 @@ andy = try (chainl1 noot and')
 
 boolexp :: Parser BoolExp
 boolexp = try (chainl1 andy or')
-          {- <|> try (do symbol lis "("
-                       b <- boolexp
-                       symbol lis ")"
-                       return b)-}
                   <|> (do a <- andy
                           return a)
 
